@@ -7,22 +7,17 @@ export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
 
-    // The messages array will contain the chat history
-    // We format it for Gemini
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Build a continuous transcript for the prompt
+    // This avoids Gemini's strict user/model alternation requirement for history
+    const transcript = messages.map((m: any) => 
+      `${m.sender}: ${m.text}`
+    ).join('\n');
+    
+    const prompt = `这是一段多人聊天室的对话记录。请你作为 "AI Assistant" 回复最后一条消息，结合上下文提供有用的回答：\n\n${transcript}\nAI Assistant:`;
 
-    // Extract text from messages
-    const chatHistory = messages.map((m: any) => ({
-      role: m.isAi ? "model" : "user",
-      parts: [{ text: `${m.sender}: ${m.text}` }],
-    }));
-
-    const chat = model.startChat({
-      history: chatHistory.slice(0, -1),
-    });
-
-    const lastMessage = messages[messages.length - 1].text;
-    const result = await chat.sendMessage(lastMessage);
+    const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
 
