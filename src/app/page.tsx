@@ -102,27 +102,24 @@ export default function Home() {
       return;
     }
 
-    // Trigger AI if requested or always? Let's say if user asks AI specifically or just a toggle
-    // For this demo, we'll call the AI API route
-    if (textToSend.toLowerCase().includes('ai')) {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: [...messages, { text: textToSend, sender: userName, is_ai: false }] }),
-        });
-        const data = await response.json();
-        
-        // Insert AI response into Supabase
-        await supabase.from('messages').insert([
-          { text: data.text, sender: 'AI Assistant', room_id: roomName, is_ai: true }
-        ]);
-      } catch (err) {
-        console.error("AI Error:", err);
-      } finally {
-        setIsLoading(false);
-      }
+    // Trigger AI for every message
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...messages, { text: textToSend, sender: userName, is_ai: false }] }),
+      });
+      const data = await response.json();
+      
+      // Insert AI response into Supabase
+      await supabase.from('messages').insert([
+        { text: data.text, sender: 'AI Assistant', room_id: roomName, is_ai: true }
+      ]);
+    } catch (err) {
+      console.error("AI Error:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
