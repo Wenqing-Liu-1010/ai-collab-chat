@@ -112,6 +112,11 @@ export default function Home() {
       });
       const data = await response.json();
       
+      if (!response.ok) {
+        alert("AI 报错了: " + (data.error || "未知错误"));
+        return;
+      }
+      
       // Insert AI response into Supabase
       await supabase.from('messages').insert([
         { text: data.text, sender: 'AI Assistant', room_id: roomName, is_ai: true }
